@@ -49,6 +49,8 @@ class CompanyControllerTest {
     private Employee michael_jones;
     private Company acme_corporation;
     private Company techcom_solutions;
+    private Company stellar_enterprises;
+    private Company global_innovators;
     private Company nexus_industries;
 
     @BeforeEach
