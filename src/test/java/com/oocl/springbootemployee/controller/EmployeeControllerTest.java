@@ -6,8 +6,10 @@ import static org.hamcrest.Matchers.hasSize;
 
 import com.oocl.springbootemployee.model.Employee;
 import com.oocl.springbootemployee.model.Gender;
-import com.oocl.springbootemployee.repository.EmployeeRepository;
+import com.oocl.springbootemployee.repository.EmployeeInMemoryRepository;
 import java.util.List;
+
+import com.oocl.springbootemployee.repository.EmployeeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,26 +31,37 @@ class EmployeeControllerTest {
     private MockMvc client;
 
     @Autowired
-    private EmployeeRepository employeeRepository;
+    private EmployeeInMemoryRepository employeeInMemoryRepository;
 
     @Autowired
     private JacksonTester<List<Employee>> employeesJacksonTester;
 
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
     @BeforeEach
     void setUp() {
-        employeeRepository.findAll().clear();
-        employeeRepository.create(new Employee(1, "John Smith", 32, Gender.MALE, 5000.0));
-        employeeRepository.create(new Employee(2, "Jane Johnson", 28, Gender.FEMALE, 6000.0));
-        employeeRepository.create(new Employee(3, "David Williams", 35, Gender.MALE, 5500.0));
-        employeeRepository.create(new Employee(4, "Emily Brown", 23, Gender.FEMALE, 4500.0));
-        employeeRepository.create(new Employee(5, "Michael Jones", 40, Gender.MALE, 7000.0));
+        employeeRepository.deleteAll();
+        employeeRepository.save(new Employee(1, "John Smith", 32, Gender.MALE, 5000.0));
+        employeeRepository.save(new Employee(2, "Jane Johnson", 28, Gender.FEMALE, 6000.0));
+        employeeRepository.save(new Employee(3, "David Williams", 35, Gender.MALE, 5500.0));
+        employeeRepository.save(new Employee(4, "Emily Brown", 23, Gender.FEMALE, 4500.0));
+        employeeRepository.save(new Employee(5, "Michael Jones", 40, Gender.MALE, 7000.0));
+        givenDataToInMemoryRepository();
+    }
+    private void givenDataToInMemoryRepository(){
+        employeeInMemoryRepository.findAll().clear();
+        employeeInMemoryRepository.create(new Employee(1, "John Smith", 32, Gender.MALE, 5000.0));
+        employeeInMemoryRepository.create(new Employee(2, "Jane Johnson", 28, Gender.FEMALE, 6000.0));
+        employeeInMemoryRepository.create(new Employee(3, "David Williams", 35, Gender.MALE, 5500.0));
+        employeeInMemoryRepository.create(new Employee(4, "Emily Brown", 23, Gender.FEMALE, 4500.0));
+        employeeInMemoryRepository.create(new Employee(5, "Michael Jones", 40, Gender.MALE, 7000.0));
     }
 
     @Test
     void should_return_employees_when_get_all_given_employee_exist() throws Exception {
         //given
         final List<Employee> givenEmployees = employeeRepository.findAll();
-
         //when
         //then
         final String jsonResponse = client.perform(MockMvcRequestBuilders.get("/employees"))
@@ -64,7 +77,7 @@ class EmployeeControllerTest {
     @Test
     void should_return_employee_when_get_by_id() throws Exception {
         // Given
-        final Employee givenEmployee = employeeRepository.findAll().get(0);
+        final Employee givenEmployee = employeeInMemoryRepository.findAll().get(0);
 
         // When
         // Then
@@ -105,7 +118,7 @@ class EmployeeControllerTest {
     @Test
     void should_create_employee_success() throws Exception {
         // Given
-        employeeRepository.findAll().clear();
+        employeeInMemoryRepository.findAll().clear();
         String givenName = "New Employee";
         Integer givenAge = 18;
         Gender givenGender = Gender.FEMALE;
@@ -130,7 +143,7 @@ class EmployeeControllerTest {
             .andExpect(MockMvcResultMatchers.jsonPath("$.age").value(givenAge))
             .andExpect(MockMvcResultMatchers.jsonPath("$.gender").value(givenGender.name()))
             .andExpect(MockMvcResultMatchers.jsonPath("$.salary").value(givenSalary));
-        List<Employee> employees = employeeRepository.findAll();
+        List<Employee> employees = employeeInMemoryRepository.findAll();
         assertThat(employees).hasSize(1);
         assertThat(employees.get(0).getId()).isEqualTo(1);
         assertThat(employees.get(0).getName()).isEqualTo(givenName);
@@ -168,7 +181,7 @@ class EmployeeControllerTest {
             .andExpect(MockMvcResultMatchers.jsonPath("$.age").value(givenAge))
             .andExpect(MockMvcResultMatchers.jsonPath("$.gender").value(givenGender.name()))
             .andExpect(MockMvcResultMatchers.jsonPath("$.salary").value(givenSalary));
-        List<Employee> employees = employeeRepository.findAll();
+        List<Employee> employees = employeeInMemoryRepository.findAll();
         assertThat(employees).hasSize(5);
         assertThat(employees.get(0).getId()).isEqualTo(1);
         assertThat(employees.get(0).getName()).isEqualTo(givenName);
@@ -186,7 +199,7 @@ class EmployeeControllerTest {
         // Then
         client.perform(MockMvcRequestBuilders.delete("/employees/" + givenId))
             .andExpect(MockMvcResultMatchers.status().isNoContent());
-        List<Employee> employees = employeeRepository.findAll();
+        List<Employee> employees = employeeInMemoryRepository.findAll();
         assertThat(employees).hasSize(4);
         assertThat(employees.get(0).getId()).isEqualTo(2);
         assertThat(employees.get(1).getId()).isEqualTo(3);
@@ -197,7 +210,7 @@ class EmployeeControllerTest {
     @Test
     void should_return_employees_when_get_by_pageable() throws Exception {
         //given
-        final List<Employee> givenEmployees = employeeRepository.findAll();
+        final List<Employee> givenEmployees = employeeInMemoryRepository.findAll();
 
         //when
         //then
